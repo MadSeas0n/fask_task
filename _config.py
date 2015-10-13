@@ -9,3 +9,5 @@ WTF_CSRF_ENABLED = True
 SECRET_KEY = 'some delicios_shit'
 
 DATABASE_PATH = os.path.join(basedir, DATABASE)
+
+SQLALCHEMY_DATABASE_URI = 'sqlite:///' + DATABASE_PATH
