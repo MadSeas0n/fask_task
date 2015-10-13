@@ -1,5 +1,6 @@
 import sqlite3
 from functools import wraps
+from forms import AddTaskForm
 
 from flask import Flask, flash, redirect, render_template, request,session,url_for, g
 
@@ -28,14 +29,14 @@ def login_required(test):
 def logout():
 	session.pop('logged_in', None)
 	flash('Goodbye!')
-	redirect(url_for('login'))
+	return redirect(url_for('login'))
 
 #login
 @app.route('/', methods=['GET', 'POST'])
 def login():
 	if request.method == 'POST':
 		if request.form['username'] != app.config['USERNAME'] or request.form['password'] != app.config['PASSWORD']:
-			error = 'Invalid credentials. Pleas try again'
+			error = 'Invalid credentials. Please try again'
 			return render_template('login.html', error=error)
 		else:
 			session['logged_in'] = True
@@ -76,7 +77,7 @@ def new_task():
 		flash('All fields are required')
 		return redirect(url_for('tasks'))
 	else:
-		g.db.execute('INSERT INTO tasks (name, duedate, priority, status) VALUES (?, ?, ?, 1)', [
+		g.db.execute('INSERT INTO tasks (name, due_date, priority, status) VALUES (?, ?, ?, 1)', [
 			request.form['name'],
 			request.form['due_date'],
 			request.form['priority']
@@ -96,7 +97,7 @@ def complete(task_id):
 	g.db.commit()
 	g.db.close()
 	flash('The task was marked as complete')
-	return redirect(url_for('/tasks/'))
+	return redirect(url_for('tasks'))
 
 #delete task
 @app.route('/delete/<int:task_id>')
@@ -107,4 +108,4 @@ def delete(task_id):
 	g.db.commit()
 	g.db.close()
 	flash('The task was successfully deleted')
-	return redirect(url_for('/tasks/'))
+	return redirect(url_for('tasks'))
