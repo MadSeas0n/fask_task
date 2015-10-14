@@ -1,3 +1,4 @@
+
 ###############
 ####IMPORTS####
 ###############
@@ -7,6 +8,7 @@ from functools import wraps
 from flask import Flask, flash, redirect, render_template, request, session, url_for, g
 from flask.ext.sqlalchemy import SQLAlchemy
 import datetime
+from sqlalchemy.exc import IntegrityError
 
 ###############
 ####CONFIG#####
@@ -20,8 +22,6 @@ from models import Task, User
 ###############
 ####HELPERS####
 ###############
-
-
 def login_required(test):
     @wraps(test)
     def wrap(*args, **kwargs):
@@ -42,8 +42,6 @@ def closed_tasks():
 ###############
 #####LOGOUT####
 ###############
-
-
 @app.route('/logout/')
 def logout():
     session.pop('logged_in', None)
@@ -54,8 +52,6 @@ def logout():
 ###############
 #####LOGIN#####
 ###############
-
-
 @app.route('/', methods=['GET', 'POST'])
 def login():
     error = None
@@ -77,8 +73,6 @@ def login():
 ###############
 ###REGISTER####
 ###############
-
-
 @app.route('/register/', methods=['GET', 'POST'])
 def register():
     error = None
@@ -90,17 +84,23 @@ def register():
                 form.email.data,
                 form.password.data,
             )
-            db.session.add(new_user)
-            db.session.commit()
-            flash('Thanks for registering. Please login.')
-            return redirect(url_for('login'))
+            try:
+                db.session.add(new_user)
+                db.session.commit()
+                flash('Thanks for registering. Please login.')
+                return redirect(url_for('login'))
+            except:
+                error = ' Username or email already registered'
+                return render_template(
+                    'register.html',
+                    form=form,
+                    error=error
+                    )
     return render_template('register.html', form=form, error=error)
 
 ###############
 #####TASKS#####
 ###############
-
-
 @app.route('/tasks/')
 @login_required
 def tasks():
@@ -110,7 +110,6 @@ def tasks():
         open_tasks=open_tasks(),
         closed_tasks=closed_tasks()
     )
-
 
 ###############
 ###ADD_TASK####
@@ -145,8 +144,6 @@ def new_task():
 #####################
 ####MARK_COMPLETE####
 #####################
-
-
 @app.route('/complete/<int:task_id>/')
 @login_required
 def complete(task_id):
@@ -159,8 +156,6 @@ def complete(task_id):
 #####################
 ####DELETE_TASK####
 #####################
-
-
 @app.route('/delete/<int:task_id>')
 @login_required
 def delete(task_id):
