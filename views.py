@@ -32,6 +32,13 @@ def login_required(test):
             return redirect(url_for('login'))
     return wrap
 
+def open_tasks():
+    return db.session.query(Task).filter_by(status='1').order_by(Task.due_date.asc())
+
+
+def closed_tasks():
+    return db.session.query(Task).filter_by(status='0').order_by(Task.due_date.asc())
+
 ###############
 #####LOGOUT####
 ###############
@@ -64,7 +71,7 @@ def login():
             else:
                 error = 'Invalid username or password.'
         else:
-            error = 'Both fields are required.'
+            error = ' Both fields are required.'
     return render_template('login.html', form=form, error=error)
 
 ###############
@@ -97,15 +104,11 @@ def register():
 @app.route('/tasks/')
 @login_required
 def tasks():
-    open_tasks = db.session.query(Task).filter_by(
-        status='1').order_by(Task.due_date.asc())
-    closed_tasks = db.session.query(Task).filter_by(
-        status='0').order_by(Task.due_date.asc())
     return render_template(
         'tasks.html',
         form=AddTaskForm(request.form),
-        open_tasks=open_tasks,
-        closed_tasks=closed_tasks
+        open_tasks=open_tasks(),
+        closed_tasks=closed_tasks()
     )
 
 
@@ -115,6 +118,7 @@ def tasks():
 @app.route('/add/', methods=['POST'])
 @login_required
 def new_task():
+    error = None
     form = AddTaskForm(request.form)
     if request.method == 'POST':
         if form.validate_on_submit():
@@ -129,7 +133,14 @@ def new_task():
             db.session.add(new_task)
             db.session.commit()
             flash('New entry was successfully posted!')
-    return redirect(url_for('tasks'))
+            return redirect(url_for('tasks'))
+    return render_template(
+        'tasks.html',
+         form=form,
+         error=error,
+         open_tasks=open_tasks(),
+         closed_tasks=closed_tasks()
+         )
 
 #####################
 ####MARK_COMPLETE####
