@@ -6,6 +6,7 @@ from functools import wraps
 
 from flask import Flask, flash, redirect, render_template, request, session, url_for, g
 from flask.ext.sqlalchemy import SQLAlchemy
+import datetime
 
 ###############
 ####CONFIG#####
@@ -39,6 +40,7 @@ def login_required(test):
 @app.route('/logout/')
 def logout():
     session.pop('logged_in', None)
+    session.pop('user_id', None)
     flash('Goodbye!')
     return redirect(url_for('login'))
 
@@ -120,7 +122,9 @@ def new_task():
                 form.name.data,
                 form.due_date.data,
                 form.priority.data,
-                '1'
+                datetime.datetime.utcnow(),
+                '1',
+                session['user_id']
             )
             db.session.add(new_task)
             db.session.commit()
